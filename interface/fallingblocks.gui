@@ -1,0 +1,264 @@
+guiTypes = {
+	containerWindowType = {
+		name = "fallingblocks_gui"
+		position = { x = 0 y = 0 }	
+		
+		size = { width = 500 height = 700 }
+		
+		fade_time = 300
+		fade_type = linear
+		moveable = yes
+		show_sound = menu_open_window
+		click_to_front = yes
+        
+		orientation = center
+        
+		background = {
+			name = "Background"
+			quadTextureSprite = "GFX_tiled_plain_bg"
+		}
+
+		instantTextBoxType = {
+			name = "title"
+			position = { x = 0 y = 8 }
+			text = "HEARTS OF FALLING BLOCKS"
+			format = center
+			font = "hoi_36header"
+			maxWidth = 500
+			maxHeight = 37
+			fixedsize = yes
+		}
+
+		instantTextBoxType = {
+			name = "subtitle"
+			position = { x = 0 y = -32 }
+			text = "Made with <3 by Yard1"
+			orientation = LOWER_LEFT
+			format = center
+			font = "hoi_16mbs"
+			maxWidth = 500
+			maxHeight = 36
+			fixedsize = yes
+		}
+
+		buttonType = {
+			name = "fallingblocks_left"
+			quadTextureSprite = "GFX_floating_arrows"
+			position = { x = 360 y = 480 }
+			frame = 1
+			scale = 1
+			Orientation = "UPPER_LEFT"
+			shortcut = "A"
+		}
+
+		buttonType = {
+			name = "fallingblocks_right"
+			quadTextureSprite = "GFX_floating_arrows"
+			position = { x = 420 y = 480 }
+			frame = 2
+			scale = 1
+			Orientation = "UPPER_LEFT"
+			shortcut = "D"
+		}
+
+		buttonType = {
+			name = "fallingblocks_down"
+			quadTextureSprite = "GFX_floating_arrows"
+			position = { x = 390 y = 510 }
+			frame = 2
+			scale = 1
+			rotation = 4.71238898
+			Orientation = "UPPER_LEFT"
+			shortcut = "S"
+		}
+
+		buttonType = {
+			name = "fallingblocks_rotate_right"
+			quadTextureSprite = "GFX_browser_refresh"
+			position = { x = 415 y = 425 }
+			scale = 1
+			Orientation = "UPPER_LEFT"
+			shortcut = "L"
+		}
+
+		instantTextBoxType = {
+			name = "score"
+			position = { x = 365 y = 375 }
+			text = "Score: [?fallingblocks_score]"
+			format = left
+			maxWidth = 100
+			maxHeight = 24
+			fixedsize = yes
+		}
+
+		instantTextBoxType = {
+			name = "lose_text"
+			position = { x = 365 y = 350 }
+			text = "You lost!"
+			format = left
+			maxWidth = 100
+			maxHeight = 24
+			fixedsize = yes
+		}
+
+		containerWindowType = {
+			name = "fallingblocks_matrix"
+			position = { x = -160 y = 64 }
+			orientation = UPPER_LEFT
+			gridboxtype = {
+				name = "fallingblocks_row_2"
+				position = { x = 32 y = 0 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_3"
+				position = { x = 32 y = 32 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_4"
+				position = { x = 32 y = 64 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_5"
+				position = { x = 32 y = 96 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_6"
+				position = { x = 32 y = 128 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_7"
+				position = { x = 32 y = 160 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_8"
+				position = { x = 32 y = 192 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_9"
+				position = { x = 32 y = 224 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_10"
+				position = { x = 32 y = 256 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_11"
+				position = { x = 32 y = 288 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_12"
+				position = { x = 32 y = 320 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_13"
+				position = { x = 32 y = 352 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_14"
+				position = { x = 32 y = 384 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_15"
+				position = { x = 32 y = 416 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_16"
+				position = { x = 32 y = 448 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_17"
+				position = { x = 32 y = 480 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}	
+		}
+	}
+
+	containerWindowType = {
+		name = "fallingblocks_block_entry"
+		position = { x = 0 y = 0}	
+		size = { width = 32 height = 32 }
+		
+		iconType = {
+			name = "fallingblocks_block"
+			quadTextureSprite = "GFX_fallingblocks_blocks"
+			position = { x = 0 y = 0 }
+			frame = 1
+		}
+	}
+
+	containerWindowType = {
+		name = "fallingblocks_on_hourly_container"
+		position = { x = 0 y = 0}	
+		size = { width = 8 height = 8 }
+
+		buttonType = {
+			name ="fallingblocks_on_hourly"
+			spriteType = "GFX_fallingblocks_cell"
+			frame = 1
+			position = { x= 0 y = 0 }
+		}	
+	}
+}

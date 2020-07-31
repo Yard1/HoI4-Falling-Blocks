@@ -1,0 +1,13 @@
+# STARTING, GAME STATE
+
+fallingblocks_is_game_state_normal = {
+	check_variable = { fallingblocks_game_state = 1 }
+}
+
+fallingblocks_is_game_state_collision = {
+	check_variable = { fallingblocks_game_state = 2 }
+}
+
+fallingblocks_is_game_state_lost = {
+	check_variable = { fallingblocks_game_state = 3 }
+}

@@ -1,0 +1,7 @@
+spriteTypes = {	
+    spriteType = {
+        name = "GFX_fallingblocks_blocks"
+        texturefile = "gfx/interface/fallingblocks/fallingblocks_blocks.dds"
+        noOfFrames = 3
+    }
+}

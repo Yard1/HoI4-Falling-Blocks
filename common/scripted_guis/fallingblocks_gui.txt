@@ -1,0 +1,158 @@
+scripted_gui = {
+	fallingblocks_gui = {
+		window_name = fallingblocks_gui
+		context_type = player_context
+		dirty = fallingblocks_dirty
+		ai_enabled = {
+			always = no
+		}
+
+		dynamic_lists = {
+			fallingblocks_row_2 = {
+				array = fallingblocks_row_2
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_3 = {
+				array = fallingblocks_row_3
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_4 = {
+				array = fallingblocks_row_4
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_5 = {
+				array = fallingblocks_row_5
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_6 = {
+				array = fallingblocks_row_6
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_7 = {
+				array = fallingblocks_row_7
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_8 = {
+				array = fallingblocks_row_8
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_9 = {
+				array = fallingblocks_row_9
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_10 = {
+				array = fallingblocks_row_10
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_11 = {
+				array = fallingblocks_row_11
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_12 = {
+				array = fallingblocks_row_12
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_13 = {
+				array = fallingblocks_row_13
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_14 = {
+				array = fallingblocks_row_14
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_15 = {
+				array = fallingblocks_row_15
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_16 = {
+				array = fallingblocks_row_16
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_17 = {
+				array = fallingblocks_row_17
+				entry_container = fallingblocks_block_entry
+			}
+		}
+
+		effects = {
+			fallingblocks_left_click = {
+				log = "fallingblocks_left_click"
+				fallingblocks_move_left = yes
+			}
+			fallingblocks_right_click = {
+				log = "fallingblocks_right_click"
+				fallingblocks_move_right = yes
+			}
+			fallingblocks_down_click = {
+				log = "fallingblocks_down_click"
+				fallingblocks_drop_rows = yes
+			}
+			fallingblocks_rotate_right_click = {
+				log = "fallingblocks_rotate_right_click"
+				fallingblocks_rotate_tetromino_right_with_wallkick = yes
+			}
+		}
+
+		triggers = {
+			fallingblocks_left_click_enabled = {
+				fallingblocks_is_game_state_normal = yes
+			}
+			fallingblocks_right_click_enabled = {
+				fallingblocks_is_game_state_normal = yes
+			}
+			fallingblocks_down_click_enabled = {
+				fallingblocks_is_game_state_normal = yes
+			}
+			fallingblocks_rotate_right_click_enabled = {
+				fallingblocks_is_game_state_normal = yes
+			}
+			lose_text_visible = {
+				fallingblocks_is_game_state_lost = yes
+			}
+		}
+
+		properties = {
+			fallingblocks_block = {
+				frame = v
+			}
+		}
+	}
+
+	fallingblocks_on_hourly_gui = {
+		context_type = player_context
+		window_name = "fallingblocks_on_hourly_container"
+		visible = {
+			is_ai = yes
+			has_variable = global.fallingblocks_AI
+			has_variable = global.fallingblocks_player
+			tag = var:global.fallingblocks_AI
+			var:global.fallingblocks_player = {
+				fallingblocks_is_game_state_normal = yes
+			}
+		}
+		ai_enabled = {
+			always = yes
+		}
+		ai_test_variance = 0
+		ai_test_interval = 1
+		effects = {
+			fallingblocks_on_hourly_click = {
+				var:global.fallingblocks_player = {
+					if = {
+						limit = {
+							fallingblocks_is_game_state_normal = yes
+						}
+						fallingblocks_drop_rows = yes
+					}
+				}
+			}
+		}
+		ai_weights = {
+			fallingblocks_on_hourly_click = {
+				ai_will_do = {
+					factor = 100
+				}
+			}
+		}
+	}
+}
