@@ -1,0 +1,8 @@
+﻿l_english:
+ FALLINGBLOCKS_TITLE:0 "FALLING BLOCKS"
+ FALLINGBLOCKS_SUBTITLE:0 "Made with <3 by Yard1"
+ FALLINGBLOCKS_CLOSE:0 "Will not restart the game, you can reopen the window with the decision"
+ fallingblocks_restart_tt:0 "Restart"
+ fallingblocks_decision_category:0 "Falling Blocks"
+ fallingblocks_open_window:0 "Open Falling Blocks"
+ FALLINGBLOCKS_HELP:0 "§YKeys:§!\nMove left: §YA§!\nMove right: §YD§!\nSoft drop: §YS§!\nHard drop: §YX§!\nRotate left: §YJ§!\nRotate right: §YL§!\n\nFill rows to get points! Multiple rows and hard drops give more points!\nBlocks will fall one row per hour when the game is unpaused - the faster the game speed, the harder it gets!"

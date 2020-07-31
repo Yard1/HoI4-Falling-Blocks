@@ -1,9 +1,9 @@
-@MAX_ROWS = 18
-@MAX_ROWS_MINUS_1 = 17
-@MAX_ROWS_MINUS_2 = 16
+@MAX_ROWS = 20
+@MAX_ROWS_MINUS_1 = 19
+@MAX_ROWS_MINUS_2 = 18
 @MAX_COLS = 10
 @MAX_COLS_MINUS_1 = 9
-@SCORE_PER_ROW = 100
+@SCORE_PER_ROW = 1
 
 # STARTING, GAME STATE
 
@@ -56,6 +56,13 @@ fallingblocks_set_game_state_collision = {
 
 fallingblocks_set_game_state_lost = {
 	set_variable = { fallingblocks_game_state = 3 }
+	add_to_variable = {
+		fallingblocks_dirty = 1
+	}
+}
+
+fallingblocks_set_game_state_paused = {
+	set_variable = { fallingblocks_game_state = 4 }
 	add_to_variable = {
 		fallingblocks_dirty = 1
 	}
@@ -129,6 +136,7 @@ fallingblocks_spawn_blockpiece = {
 		array = fallingblocks_spawn_bag
 		index = blockpiece_to_spawn_idx
 	}
+	set_variable = { fallingblocks_freshly_spawned = 1 }
 	meta_effect = {
 		text = {
 			fallingblocks_spawn_blockpiece_[BLOCKPIECE] = yes
@@ -672,6 +680,7 @@ fallingblocks_drop_rows = {
 	clear_temp_array = full_rows
 	clear_temp_array = fallingblocks_dropped_rows
 	clear_temp_array = fallingblocks_dropped_cols
+	clear_variable = fallingblocks_freshly_spawned
 	for_loop_effect = {
 		start = @MAX_ROWS_MINUS_1
 		end = 0
@@ -681,23 +690,6 @@ fallingblocks_drop_rows = {
 		break = break
 
 		fallingblocks_drop_row = yes
-		if = {
-			limit = {
-				meta_trigger = {
-					text = {
-						all_of = {
-							array = fallingblocks_row_[IDX]
-							value = column_value
-							check_variable = { column_value > 0 }
-						}
-					}
-					IDX = "[?v|0]"
-				}
-			}
-			add_to_temp_array = {
-				full_rows = v
-			}
-		}
 	}
 	fallingblocks_handle_collision = yes
 	fallingblocks_handle_full_rows = yes
@@ -710,6 +702,25 @@ fallingblocks_drop_rows = {
 	add_to_variable = {
 		fallingblocks_dirty = 1
 	}
+}
+
+fallingblocks_hard_drop = {
+	clear_variable = fallingblocks_freshly_spawned
+	set_variable = { hard_drop = 1 }
+	for_loop_effect = {
+		start = 0
+		end = @MAX_ROWS
+		break = break_hard
+		value = value_break
+		fallingblocks_drop_rows = yes
+		if = {
+			limit = {
+				has_variable = fallingblocks_freshly_spawned
+			}
+			set_temp_variable = { break_hard = 1 }
+		}
+	}
+	clear_variable = hard_drop
 }
 
 fallingblocks_drop_row = {
@@ -884,9 +895,36 @@ fallingblocks_handle_collision = {
 							set_variable = {
 								fallingblocks_row_[ROW]^column = 2
 							}
+							if = {
+								limit = {
+									check_variable = {
+										[ROW] < 2
+									}
+								}
+								fallingblocks_set_game_state_lost = yes
+							}
 						}
 					}
 					ROW = "[?row|0]"
+				}
+			}
+
+			if = {
+				limit = {
+					meta_trigger = {
+						text = {
+							all_of = {
+								array = fallingblocks_row_[ROW]
+								value = column_value
+								check_variable = { column_value > 0 }
+							}
+						}
+						ROW = "[?row|0]"
+					}
+				}
+				add_to_temp_array = {
+					array = full_rows
+					value = row
 				}
 			}
 		}
@@ -1271,7 +1309,7 @@ fallingblocks_do_rotation = {
 }
 
 fallingblocks_wallkick_right = {
-	#log = "Trying wallkick"
+	log = "Trying wallkick"
 	set_temp_variable = {
 		wallkick = 0
 	}
@@ -1282,7 +1320,7 @@ fallingblocks_wallkick_right = {
 				can_move > 0
 			}
 		}
-		#log = "Moved right"
+		log = "Moved right"
 		fallingblocks_rotate_blockpiece_right = yes
 		if = {
 			limit = {
@@ -1291,10 +1329,15 @@ fallingblocks_wallkick_right = {
 				}
 			}
 			fallingblocks_move_left = yes
-			#log = "Moved left back to origin"
+			log = "Moved left back to origin"
 		}
 	}
-	else = {
+	if = {
+		limit = {
+			check_variable = {
+				can_rotate < 1
+			}
+		}
 		fallingblocks_move_left = yes
 		if = {
 			limit = {
@@ -1302,7 +1345,7 @@ fallingblocks_wallkick_right = {
 					can_move > 0
 				}
 			}
-			#log = "Moved left"
+			log = "Moved left"
 			fallingblocks_rotate_blockpiece_right = yes
 			if = {
 				limit = {
@@ -1311,7 +1354,7 @@ fallingblocks_wallkick_right = {
 					}
 				}
 				fallingblocks_move_right = yes
-				#log = "Moved right back to origin"
+				log = "Moved right back to origin"
 			}
 		}
 	}
@@ -1330,7 +1373,7 @@ fallingblocks_rotate_blockpiece_right = {
 	#log = "[?fallingblocks_current_blockpiece_row_bottom]x[?fallingblocks_current_blockpiece_col_right]"
 	clear_temp_array = columns_to_check
 	clear_temp_array = rows_to_check
-	clear_temp_array = column_to_clear
+	clear_temp_array = columns_to_clear
 	clear_temp_array = rows_to_clear
 	if = {
 		limit = {
@@ -1378,9 +1421,6 @@ fallingblocks_rotate_blockpiece_right = {
 				set_temp_variable = {
 					row_to_check = fallingblocks_current_blockpiece_row_bottom
 				}
-				subtract_from_temp_variable = {
-					row_to_check = 1
-				}
 
 				add_to_temp_array = {
 					columns_to_check = column_to_check
@@ -1389,8 +1429,8 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				subtract_from_temp_variable = {
+					row_to_check = 1
 				}
 
 				add_to_temp_array = {
@@ -1426,9 +1466,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
 					add_to_temp_variable = {
 						column_to_clear = 1
 					}
@@ -1489,9 +1526,6 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
 				add_to_temp_variable = {
 					column_to_check = 1
 				}
@@ -1540,9 +1574,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
-					}
 					add_to_temp_variable = {
 						row_to_clear = 1
 					}
@@ -1603,9 +1634,6 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
 				add_to_temp_variable = {
 					row_to_check = 1
 				}
@@ -1657,9 +1685,6 @@ fallingblocks_rotate_blockpiece_right = {
 					set_temp_variable = {
 						column_to_clear = fallingblocks_current_blockpiece_col_right
 					}
-					subtract_from_temp_variable = {
-						column_to_clear = 1
-					}
 
 					add_to_temp_array = {
 						columns_to_clear = column_to_clear
@@ -1668,8 +1693,8 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_right
+					subtract_from_temp_variable = {
+						column_to_clear = 1
 					}
 
 					add_to_temp_array = {
@@ -1721,9 +1746,6 @@ fallingblocks_rotate_blockpiece_right = {
 				set_temp_variable = {
 					column_to_check = fallingblocks_current_blockpiece_col_right
 				}
-				subtract_from_temp_variable = {
-					column_to_check = 1
-				}
 
 				add_to_temp_array = {
 					columns_to_check = column_to_check
@@ -1732,8 +1754,8 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_right
+				subtract_from_temp_variable = {
+					column_to_check = 1
 				}
 
 				add_to_temp_array = {
@@ -1772,9 +1794,6 @@ fallingblocks_rotate_blockpiece_right = {
 					set_temp_variable = {
 						row_to_clear = fallingblocks_current_blockpiece_row_bottom
 					}
-					subtract_from_temp_variable = {
-						row_to_clear = 1
-					}
 
 					add_to_temp_array = {
 						columns_to_clear = column_to_clear
@@ -1783,8 +1802,8 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					subtract_from_temp_variable = {
+						row_to_clear = 1
 					}
 
 					add_to_temp_array = {
@@ -2105,9 +2124,6 @@ fallingblocks_rotate_blockpiece_right = {
 				add_to_temp_variable = {
 					column_to_check = 1
 				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
 
 				add_to_temp_array = {
 					columns_to_check = column_to_check
@@ -2116,12 +2132,6 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				add_to_temp_variable = {
-					column_to_check = 1
-				}
 				set_temp_variable = {
 					row_to_check = fallingblocks_current_blockpiece_row_bottom
 				}
@@ -2156,12 +2166,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
-					}
 					add_to_temp_variable = {
 						row_to_clear = 1
 					}
@@ -2175,12 +2179,6 @@ fallingblocks_rotate_blockpiece_right = {
 
 					set_temp_variable = {
 						column_to_clear = fallingblocks_current_blockpiece_col_right
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
-					}
-					add_to_temp_variable = {
-						row_to_clear = 1
 					}
 
 					add_to_temp_array = {
@@ -2231,12 +2229,6 @@ fallingblocks_rotate_blockpiece_right = {
 				set_temp_variable = {
 					column_to_check = fallingblocks_current_blockpiece_col_right
 				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
-				add_to_temp_variable = {
-					row_to_check = 1
-				}
 
 				add_to_temp_array = {
 					columns_to_check = column_to_check
@@ -2245,9 +2237,6 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_right
-				}
 				set_temp_variable = {
 					row_to_check = fallingblocks_current_blockpiece_row_bottom
 				}
@@ -2287,9 +2276,6 @@ fallingblocks_rotate_blockpiece_right = {
 
 					set_temp_variable = {
 						column_to_clear = fallingblocks_current_blockpiece_col_right
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
 					}
 
 					add_to_temp_array = {
@@ -2340,42 +2326,30 @@ fallingblocks_rotate_blockpiece_right = {
 				set_temp_variable = {
 					column_to_check = fallingblocks_current_blockpiece_col_left
 				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
 				add_to_temp_variable = {
 					column_to_check = 1
 				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
 				set_temp_variable = {
 					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
-
-				add_to_temp_array = {
-					columns_to_check = column_to_check
-				}
-				add_to_temp_array = {
-					rows_to_check = row_to_check
-				}
-
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_bottom
-				}
-
-				add_to_temp_array = {
-					columns_to_check = column_to_check
-				}
-				add_to_temp_array = {
-					rows_to_check = row_to_check
-				}
-
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				add_to_temp_variable = {
-					column_to_check = 1
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_bottom
 				}
 
 				add_to_temp_array = {
@@ -2411,9 +2385,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_right
-					}
 					set_temp_variable = {
 						row_to_clear = fallingblocks_current_blockpiece_row_bottom
 					}
@@ -2478,9 +2449,6 @@ fallingblocks_rotate_blockpiece_right = {
 				}
 
 				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				set_temp_variable = {
 					row_to_check = fallingblocks_current_blockpiece_row_top
 				}
 				add_to_temp_variable = {
@@ -2496,12 +2464,6 @@ fallingblocks_rotate_blockpiece_right = {
 
 				set_temp_variable = {
 					column_to_check = fallingblocks_current_blockpiece_col_right
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
-				add_to_temp_variable = {
-					row_to_check = 1
 				}
 
 				add_to_temp_array = {
@@ -2520,12 +2482,33 @@ fallingblocks_rotate_blockpiece_right = {
 						}
 					}
 					#log = "can rotate"
+
 					set_temp_variable = {
 						column_to_clear = fallingblocks_current_blockpiece_col_left
 					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
 					add_to_temp_variable = {
 						column_to_clear = 1
 					}
+
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+
 					set_temp_variable = {
 						row_to_clear = fallingblocks_current_blockpiece_row_top
 					}
@@ -2537,36 +2520,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_bottom
-					}
-
-					add_to_temp_array = {
-						columns_to_clear = column_to_clear
-					}
-					add_to_temp_array = {
-						rows_to_clear = row_to_clear
-					}
-
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
-					add_to_temp_variable = {
-						column_to_clear = 1
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_bottom
-					}
-
-					add_to_temp_array = {
-						columns_to_clear = column_to_clear
-					}
-					add_to_temp_array = {
-						rows_to_clear = row_to_clear
-					}
 
 					fallingblocks_do_rotation = yes
 
@@ -2614,12 +2567,6 @@ fallingblocks_rotate_blockpiece_right = {
 				}
 
 				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				add_to_temp_variable = {
-					column_to_check = 1
-				}
-				set_temp_variable = {
 					row_to_check = fallingblocks_current_blockpiece_row_bottom
 				}
 
@@ -2632,9 +2579,6 @@ fallingblocks_rotate_blockpiece_right = {
 
 				set_temp_variable = {
 					column_to_check = fallingblocks_current_blockpiece_col_right
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_bottom
 				}
 
 				add_to_temp_array = {
@@ -2670,9 +2614,6 @@ fallingblocks_rotate_blockpiece_right = {
 					set_temp_variable = {
 						column_to_clear = fallingblocks_current_blockpiece_col_left
 					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
-					}
 					add_to_temp_variable = {
 						row_to_clear = 1
 					}
@@ -2686,12 +2627,6 @@ fallingblocks_rotate_blockpiece_right = {
 
 					set_temp_variable = {
 						column_to_clear = fallingblocks_current_blockpiece_col_right
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
-					}
-					add_to_temp_variable = {
-						row_to_clear = 1
 					}
 
 					add_to_temp_array = {
@@ -2737,9 +2672,6 @@ fallingblocks_rotate_blockpiece_right = {
 				}
 
 				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				set_temp_variable = {
 					row_to_check = fallingblocks_current_blockpiece_row_top
 				}
 				add_to_temp_variable = {
@@ -2755,12 +2687,6 @@ fallingblocks_rotate_blockpiece_right = {
 
 				set_temp_variable = {
 					column_to_check = fallingblocks_current_blockpiece_col_right
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
-				add_to_temp_variable = {
-					row_to_check = 1
 				}
 
 				add_to_temp_array = {
@@ -2797,12 +2723,6 @@ fallingblocks_rotate_blockpiece_right = {
 					}
 
 					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
-					add_to_temp_variable = {
-						column_to_clear = 1
-					}
-					set_temp_variable = {
 						row_to_clear = fallingblocks_current_blockpiece_row_bottom
 					}
 
@@ -2816,9 +2736,6 @@ fallingblocks_rotate_blockpiece_right = {
 
 					set_temp_variable = {
 						column_to_clear = fallingblocks_current_blockpiece_col_right
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_bottom
 					}
 
 					add_to_temp_array = {
@@ -2863,14 +2780,8 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
 				add_to_temp_variable = {
 					column_to_check = 1
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
 				}
 
 				add_to_temp_array = {
@@ -2880,12 +2791,7 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				add_to_temp_variable = {
-					column_to_check = 1
-				}
+
 				set_temp_variable = {
 					row_to_check = fallingblocks_current_blockpiece_row_bottom
 				}
@@ -2926,12 +2832,6 @@ fallingblocks_rotate_blockpiece_right = {
 					set_temp_variable = {
 						column_to_clear = fallingblocks_current_blockpiece_col_left
 					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
-					}
-					add_to_temp_variable = {
-						row_to_clear = 1
-					}
 
 					add_to_temp_array = {
 						columns_to_clear = column_to_clear
@@ -2940,9 +2840,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
 					set_temp_variable = {
 						row_to_clear = fallingblocks_current_blockpiece_row_bottom
 					}
@@ -2989,12 +2886,6 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
 				add_to_temp_variable = {
 					row_to_check = 1
 				}
@@ -3007,13 +2898,7 @@ fallingblocks_rotate_blockpiece_right = {
 				}
 
 				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_right
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
-				add_to_temp_variable = {
-					row_to_check = 1
+					column_to_check = fallingblocks_current_blockpiece_col_left
 				}
 
 				add_to_temp_array = {
@@ -3046,14 +2931,8 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
 					add_to_temp_variable = {
 						column_to_clear = 1
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
 					}
 
 					add_to_temp_array = {
@@ -3063,12 +2942,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
-					add_to_temp_variable = {
-						column_to_clear = 1
-					}
 					set_temp_variable = {
 						row_to_clear = fallingblocks_current_blockpiece_row_bottom
 					}
@@ -3162,14 +3035,8 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
 					add_to_temp_variable = {
 						column_to_clear = 1
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
 					}
 
 					add_to_temp_array = {
@@ -3254,12 +3121,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_right
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
-					}
 					add_to_temp_variable = {
 						row_to_clear = 1
 					}
@@ -3295,6 +3156,17 @@ fallingblocks_rotate_blockpiece_right = {
 				set_temp_variable = {
 					column_to_check = fallingblocks_current_blockpiece_col_left
 				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
 				add_to_temp_variable = {
 					column_to_check = 1
 				}
@@ -3309,20 +3181,6 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_bottom
-				}
-
-				add_to_temp_array = {
-					columns_to_check = column_to_check
-				}
-				add_to_temp_array = {
-					rows_to_check = row_to_check
-				}
-
 				fallingblocks_check_rotation = yes
 
 				if = {
@@ -3351,9 +3209,6 @@ fallingblocks_rotate_blockpiece_right = {
 					}
 					add_to_temp_variable = {
 						column_to_clear = 1
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_bottom
 					}
 
 					add_to_temp_array = {
@@ -3401,9 +3256,6 @@ fallingblocks_rotate_blockpiece_right = {
 				set_temp_variable = {
 					column_to_check = fallingblocks_current_blockpiece_col_right
 				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
 				add_to_temp_variable = {
 					row_to_check = 1
 				}
@@ -3441,9 +3293,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
 					set_temp_variable = {
 						row_to_clear = fallingblocks_current_blockpiece_row_bottom
 					}
@@ -3501,9 +3350,6 @@ fallingblocks_rotate_blockpiece_right = {
 				}
 
 				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_right
-				}
-				set_temp_variable = {
 					row_to_check = fallingblocks_current_blockpiece_row_bottom
 				}
 
@@ -3539,9 +3385,6 @@ fallingblocks_rotate_blockpiece_right = {
 
 					set_temp_variable = {
 						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
-					set_temp_variable = {
-						row_to_clear = fallingblocks_current_blockpiece_row_top
 					}
 					add_to_temp_variable = {
 						row_to_clear = 1
@@ -3589,14 +3432,8 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
 				add_to_temp_variable = {
 					column_to_check = 1
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_bottom
 				}
 
 				add_to_temp_array = {
@@ -3681,12 +3518,6 @@ fallingblocks_rotate_blockpiece_right = {
 					rows_to_check = row_to_check
 				}
 
-				set_temp_variable = {
-					column_to_check = fallingblocks_current_blockpiece_col_left
-				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
 				add_to_temp_variable = {
 					row_to_check = 1
 				}
@@ -3779,9 +3610,6 @@ fallingblocks_rotate_blockpiece_right = {
 				set_temp_variable = {
 					column_to_check = fallingblocks_current_blockpiece_col_right
 				}
-				set_temp_variable = {
-					row_to_check = fallingblocks_current_blockpiece_row_top
-				}
 
 				add_to_temp_array = {
 					columns_to_check = column_to_check
@@ -3813,9 +3641,6 @@ fallingblocks_rotate_blockpiece_right = {
 						rows_to_clear = row_to_clear
 					}
 
-					set_temp_variable = {
-						column_to_clear = fallingblocks_current_blockpiece_col_left
-					}
 					add_to_temp_variable = {
 						column_to_clear = 1
 					}
@@ -3852,6 +3677,2348 @@ fallingblocks_rotate_blockpiece_right = {
 	}
 }
 
+fallingblocks_wallkick_left = {
+	log = "Trying wallkick"
+	set_temp_variable = {
+		wallkick = 0
+	}
+	fallingblocks_move_left = yes
+	if = {
+		limit = {
+			check_variable = {
+				can_move > 0
+			}
+		}
+		log = "Moved left"
+		fallingblocks_rotate_blockpiece_left = yes
+		if = {
+			limit = {
+				check_variable = {
+					can_rotate < 1
+				}
+			}
+			fallingblocks_move_right = yes
+			log = "Moved right back to origin"
+		}
+	}
+	if = {
+		limit = {
+			check_variable = {
+				can_rotate < 1
+			}
+		}
+		fallingblocks_move_right = yes
+		if = {
+			limit = {
+				check_variable = {
+					can_move > 0
+				}
+			}
+			log = "Moved right"
+			fallingblocks_rotate_blockpiece_left = yes
+			if = {
+				limit = {
+					check_variable = {
+						can_rotate < 1
+					}
+				}
+				fallingblocks_move_left = yes
+				log = "Moved left back to origin"
+			}
+		}
+	}
+}
+
+fallingblocks_rotate_blockpiece_left_with_wallkick = {
+	set_temp_variable = {
+		wallkick = 1
+	}
+	fallingblocks_rotate_blockpiece_left = yes
+}
+
+fallingblocks_rotate_blockpiece_left = {
+	#log = "ROTATE LEFT"
+	#log = "[?fallingblocks_current_blockpiece_row_top]x[?fallingblocks_current_blockpiece_col_left]"
+	#log = "[?fallingblocks_current_blockpiece_row_bottom]x[?fallingblocks_current_blockpiece_col_right]"
+	clear_temp_array = columns_to_clear
+	clear_temp_array = rows_to_clear
+	clear_temp_array = columns_to_check
+	clear_temp_array = rows_to_check
+	if = {
+		limit = {
+			NOT = {
+				# no need to do anything with the square
+				check_variable = {
+					fallingblocks_current_blockpiece = 2
+				}
+			}
+		}
+
+		set_temp_variable = {
+			can_rotate = 1
+		}
+
+		if = {
+			limit = {
+				check_variable = {
+					fallingblocks_current_blockpiece = 1
+				}
+			}
+			if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				subtract_from_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					subtract_from_temp_variable = {
+						column_to_clear = 1
+					}
+
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					subtract_from_temp_variable = {
+						column_to_clear = 1
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					subtract_from_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+				subtract_from_temp_variable = {
+					column_to_check = 1
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+					subtract_from_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+				subtract_from_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				subtract_from_temp_variable = {
+					column_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					fallingblocks_current_blockpiece = 3
+				}
+			}
+			if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					fallingblocks_current_blockpiece = 4
+				}
+			}
+			if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					fallingblocks_current_blockpiece = 5
+				}
+			}
+			if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					fallingblocks_current_blockpiece = 6
+				}
+			}
+			if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					fallingblocks_current_blockpiece = 7
+				}
+			}
+			if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_right
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 0
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				add_to_temp_variable = {
+					column_to_check = 1
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_bottom
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					add_to_temp_variable = {
+						column_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 1
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						fallingblocks_current_blockpiece_rotation = 3
+					}
+				}
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_right
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_top
+				}
+				add_to_temp_variable = {
+					row_to_check = 1
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				set_temp_variable = {
+					column_to_check = fallingblocks_current_blockpiece_col_left
+				}
+				set_temp_variable = {
+					row_to_check = fallingblocks_current_blockpiece_row_bottom
+				}
+
+				add_to_temp_array = {
+					columns_to_check = column_to_check
+				}
+				add_to_temp_array = {
+					rows_to_check = row_to_check
+				}
+
+				fallingblocks_check_rotation = yes
+
+				if = {
+					limit = {
+						check_variable = {
+							can_rotate > 0
+						}
+					}
+					#log = "can rotate"
+					set_temp_variable = {
+						column_to_clear = fallingblocks_current_blockpiece_col_left
+					}
+					set_temp_variable = {
+						row_to_clear = fallingblocks_current_blockpiece_row_top
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+	
+					add_to_temp_variable = {
+						row_to_clear = 1
+					}
+	
+					add_to_temp_array = {
+						columns_to_clear = column_to_clear
+					}
+					add_to_temp_array = {
+						rows_to_clear = row_to_clear
+					}
+
+					fallingblocks_do_rotation = yes
+
+					set_variable = {
+						fallingblocks_current_blockpiece_rotation = 2
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = {
+							wallkick > 0
+						}
+					}
+					fallingblocks_wallkick_left = yes
+				}
+			}
+		}
+	}
+	add_to_variable = {
+		fallingblocks_dirty = 1
+	}
+}
 
 # ROW CLEARING
 
@@ -3860,11 +6027,28 @@ fallingblocks_handle_full_rows = {
 		temp_score = 0
 	}
 	set_temp_variable = {
-		temp_score_multiplier = full_rows^num
+		temp_score_multiplier = hard_drop?0
 	}
+
+	fallingblocks_drop_full_rows = yes
+
+	multiply_temp_variable = {
+		temp_score = temp_score_multiplier
+	}
+	add_to_variable = {
+		fallingblocks_score = temp_score
+	}
+	add_to_variable = {
+		fallingblocks_dirty = 1
+	}
+}
+
+fallingblocks_drop_full_rows = {
 	for_each_loop = {
 		array = full_rows
 		value = full_row_value
+
+		#log = "row [?full_row_value] is full"
 
 		fallingblocks_clear_row = yes
 
@@ -3874,6 +6058,8 @@ fallingblocks_handle_full_rows = {
 		subtract_from_temp_variable = {
 			row_above = 1
 		}
+
+		#log = "row_above [?row_above]"
 
 		for_loop_effect = {
 			start = row_above
@@ -3885,22 +6071,18 @@ fallingblocks_handle_full_rows = {
 
 			fallingblocks_drop_row_unconditional = yes
 		}
-
+		add_to_temp_variable = {
+			temp_score_multiplier = 1
+		}
 		add_to_temp_variable = {
 			temp_score = @SCORE_PER_ROW
 		}
-	}
-	add_to_variable = {
-		fallingblocks_current_blockpiece_row_top = full_rows^num
-	}
-	add_to_variable = {
-		fallingblocks_current_blockpiece_row_bottom = full_rows^num
-	}
-	multiply_temp_variable = {
-		temp_score = temp_score_multiplier
-	}
-	add_to_variable = {
-		fallingblocks_score = temp_score
+		add_to_variable = {
+			fallingblocks_current_blockpiece_row_top = 1
+		}
+		add_to_variable = {
+			fallingblocks_current_blockpiece_row_bottom = 1
+		}
 	}
 }
 

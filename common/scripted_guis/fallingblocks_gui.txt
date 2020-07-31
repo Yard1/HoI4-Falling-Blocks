@@ -7,6 +7,11 @@ scripted_gui = {
 			always = no
 		}
 
+		visible = {
+			has_variable = fallingblocks_game_state
+			fallingblocks_is_game_state_paused = no
+		}
+
 		dynamic_lists = {
 			fallingblocks_row_2 = {
 				array = fallingblocks_row_2
@@ -72,24 +77,40 @@ scripted_gui = {
 				array = fallingblocks_row_17
 				entry_container = fallingblocks_block_entry
 			}
+			fallingblocks_row_18 = {
+				array = fallingblocks_row_18
+				entry_container = fallingblocks_block_entry
+			}
+			fallingblocks_row_19 = {
+				array = fallingblocks_row_19
+				entry_container = fallingblocks_block_entry
+			}
 		}
 
 		effects = {
 			fallingblocks_left_click = {
-				log = "fallingblocks_left_click"
 				fallingblocks_move_left = yes
 			}
 			fallingblocks_right_click = {
-				log = "fallingblocks_right_click"
 				fallingblocks_move_right = yes
 			}
 			fallingblocks_down_click = {
-				log = "fallingblocks_down_click"
 				fallingblocks_drop_rows = yes
 			}
+			fallingblocks_hard_down_click = {
+				fallingblocks_hard_drop = yes
+			}
 			fallingblocks_rotate_right_click = {
-				log = "fallingblocks_rotate_right_click"
-				fallingblocks_rotate_tetromino_right_with_wallkick = yes
+				fallingblocks_rotate_blockpiece_right_with_wallkick = yes
+			}
+			fallingblocks_rotate_left_click = {
+				fallingblocks_rotate_blockpiece_left_with_wallkick = yes
+			}
+			close_button_click = {
+				fallingblocks_set_game_state_paused = yes
+			}
+			fallingblocks_restart_click = {
+				fallingblocks_start_game = yes
 			}
 		}
 
@@ -103,7 +124,13 @@ scripted_gui = {
 			fallingblocks_down_click_enabled = {
 				fallingblocks_is_game_state_normal = yes
 			}
+			fallingblocks_hard_down_click_enabled = {
+				fallingblocks_is_game_state_normal = yes
+			}
 			fallingblocks_rotate_right_click_enabled = {
+				fallingblocks_is_game_state_normal = yes
+			}
+			fallingblocks_rotate_left_click_enabled = {
 				fallingblocks_is_game_state_normal = yes
 			}
 			lose_text_visible = {

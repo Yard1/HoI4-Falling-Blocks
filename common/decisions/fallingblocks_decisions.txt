@@ -1,0 +1,26 @@
+fallingblocks_decision_category = {
+	fallingblocks_open_window = {
+		cost = 0
+		days_remove = 0
+		visible = {
+			is_ai = no
+			OR = {
+				NOT = { has_variable = fallingblocks_game_state }
+				fallingblocks_is_game_state_paused = yes
+			}
+		}
+		complete_effect = {
+			hidden_effect = {
+				if = {
+					limit = {
+						fallingblocks_is_game_state_paused = yes
+					}
+					fallingblocks_set_game_state_normal = yes
+				}
+				else = {
+					fallingblocks_start_game = yes
+				}
+			}
+		}
+	}
+}

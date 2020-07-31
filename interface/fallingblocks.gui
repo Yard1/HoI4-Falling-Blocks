@@ -12,6 +12,7 @@ guiTypes = {
 		click_to_front = yes
         
 		orientation = center
+		origo = center
         
 		background = {
 			name = "Background"
@@ -21,7 +22,7 @@ guiTypes = {
 		instantTextBoxType = {
 			name = "title"
 			position = { x = 0 y = 8 }
-			text = "HEARTS OF FALLING BLOCKS"
+			text = "FALLINGBLOCKS_TITLE"
 			format = center
 			font = "hoi_36header"
 			maxWidth = 500
@@ -32,7 +33,7 @@ guiTypes = {
 		instantTextBoxType = {
 			name = "subtitle"
 			position = { x = 0 y = -32 }
-			text = "Made with <3 by Yard1"
+			text = "FALLINGBLOCKS_SUBTITLE"
 			orientation = LOWER_LEFT
 			format = center
 			font = "hoi_16mbs"
@@ -42,9 +43,29 @@ guiTypes = {
 		}
 
 		buttonType = {
+			name = "close_button"
+			position = { x = -40 y = 8 }
+			quadTextureSprite ="GFX_closebutton"
+			Orientation = UPPER_RIGHT
+			clicksound = click_close
+			pdx_tooltip = "CLOSE"
+			pdx_tooltip_delayed = "FALLINGBLOCKS_CLOSE"
+		}
+
+
+		buttonType = {
+			name = "fallingblocks_restart"
+			quadTextureSprite = "GFX_browser_refresh"
+			position = { x = -80 y = 7 }
+			Orientation = UPPER_RIGHT
+			scale = 0.8
+			pdx_tooltip = "fallingblocks_restart_tt"
+		}
+
+		buttonType = {
 			name = "fallingblocks_left"
 			quadTextureSprite = "GFX_floating_arrows"
-			position = { x = 360 y = 480 }
+			position = { x = 360 y = 280 }
 			frame = 1
 			scale = 1
 			Orientation = "UPPER_LEFT"
@@ -54,7 +75,7 @@ guiTypes = {
 		buttonType = {
 			name = "fallingblocks_right"
 			quadTextureSprite = "GFX_floating_arrows"
-			position = { x = 420 y = 480 }
+			position = { x = 420 y = 280 }
 			frame = 2
 			scale = 1
 			Orientation = "UPPER_LEFT"
@@ -64,7 +85,7 @@ guiTypes = {
 		buttonType = {
 			name = "fallingblocks_down"
 			quadTextureSprite = "GFX_floating_arrows"
-			position = { x = 390 y = 510 }
+			position = { x = 390 y = 310 }
 			frame = 2
 			scale = 1
 			rotation = 4.71238898
@@ -73,29 +94,63 @@ guiTypes = {
 		}
 
 		buttonType = {
+			name = "fallingblocks_hard_down"
+			quadTextureSprite = "GFX_floating_arrows"
+			position = { x = 393 y = 280 }
+			frame = 2
+			scale = 0.8
+			rotation = 4.71238898
+			Orientation = "UPPER_LEFT"
+			shortcut = "X"
+		}
+
+		buttonType = {
 			name = "fallingblocks_rotate_right"
 			quadTextureSprite = "GFX_browser_refresh"
-			position = { x = 415 y = 425 }
+			position = { x = 415 y = 225 }
 			scale = 1
 			Orientation = "UPPER_LEFT"
 			shortcut = "L"
 		}
 
+		buttonType = {
+			name = "fallingblocks_rotate_left"
+			quadTextureSprite = "GFX_browser_refresh"
+			position = { x = 365 y = 225 }
+			scale = 1
+			rotation = 3.14159265
+			Orientation = "UPPER_LEFT"
+			shortcut = "J"
+		}
+
+		instantTextBoxType = {
+			name = "help"
+			position = { x = 345 y = 384 } 
+			text = "FALLINGBLOCKS_HELP"
+			format = left 
+			font = "hoi_16mbs"
+			maxWidth = 140
+			maxHeight = 300
+			fixedsize = yes
+		}
+
 		instantTextBoxType = {
 			name = "score"
-			position = { x = 365 y = 375 }
+			position = { x = 345 y = 175 }
 			text = "Score: [?fallingblocks_score]"
 			format = left
-			maxWidth = 100
-			maxHeight = 24
+			font = "hoi_18mbs"
+			maxWidth = 150
+			maxHeight = 39
 			fixedsize = yes
 		}
 
 		instantTextBoxType = {
 			name = "lose_text"
-			position = { x = 365 y = 350 }
+			position = { x = 365 y = 150 }
 			text = "You lost!"
 			format = left
+			font = "hoi_18mbs"
 			maxWidth = 100
 			maxHeight = 24
 			fixedsize = yes
@@ -232,7 +287,23 @@ guiTypes = {
 				slotsize = { width = 32 height = 32 }
 				max_slots_horizontal = 10
 				max_slots_vertical = 0
-			}	
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_18"
+				position = { x = 32 y = 512 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
+			gridboxtype = {
+				name = "fallingblocks_row_19"
+				position = { x = 32 y = 544 }
+				size = { width = 320 height = 32 }
+				slotsize = { width = 32 height = 32 }
+				max_slots_horizontal = 10
+				max_slots_vertical = 0
+			}
 		}
 	}
 
@@ -256,7 +327,7 @@ guiTypes = {
 
 		buttonType = {
 			name ="fallingblocks_on_hourly"
-			spriteType = "GFX_fallingblocks_cell"
+			spriteType = "GFX_fallingblocks_blocks"
 			frame = 1
 			position = { x= 0 y = 0 }
 		}	

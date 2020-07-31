@@ -1,0 +1,3 @@
+fallingblocks_decision_category = {
+	priority = 999
+}

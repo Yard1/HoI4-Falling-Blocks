@@ -11,3 +11,7 @@ fallingblocks_is_game_state_collision = {
 fallingblocks_is_game_state_lost = {
 	check_variable = { fallingblocks_game_state = 3 }
 }
+
+fallingblocks_is_game_state_paused = {
+	check_variable = { fallingblocks_game_state = 4 }
+}
